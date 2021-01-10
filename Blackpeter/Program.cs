@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Blackpeter
@@ -10,66 +11,90 @@ namespace Blackpeter
     {
         static void Main(string[] args)
         {
-            CardDeck MyCardDeck = new CardDeck();
+            Game BlackPeterGame = new Game();
+            Random rnd = new Random();
+
+            //Add players
+            for (int i = 0; i < 2; i++)
+            {
+                BlackPeterGame.Players.Add(new Player());
+            }
 
             //Add all the cards in a standard deck of 52 card deck.
             foreach (Suits.SuitType suit in (Suits.SuitType[])Enum.GetValues(typeof(Suits.SuitType)))
             {
-                for (int i = 1; i <= 1; i++)
+                for (int i = 1; i <= 13; i++)
                 {
-                    MyCardDeck.Cards.Add(new Card(i, suit));
+                    BlackPeterGame.Cards.Add(new Card(i, suit));
                 }
             }
-
 
             //Shuffle the cards
-            MyCardDeck.ShuffleCards();
+            BlackPeterGame.ShuffleCards();
 
+            //Remove Spade Knight so that Clubs Knight become black peter
+            BlackPeterGame.RemoveCardWithSuiteAndValue(10, Suits.SuitType.Spades);
 
-
-
-            string myText =
-            @"┌─────┐
-│V    │
-│  S  │
-│    V│
-└─────┘";
-
-
-            //            string myText1 =
-            //            @"
-            //┌─────────┐
-            //│░░░░░░░░░│
-            //│░░░░░░░░░│
-            //│░░░░░░░░░│
-            //│░░░░░░░░░│
-            //│░░░░░░░░░│
-            //│░░░░░░░░░│
-            //│░░░░░░░░░│    
-            //└─────────┘";
-
-            var sb = new System.Text.StringBuilder();
-
-
-
-
-
-            for (int i = 0; i < myText.Split('\n').Length; i++)
+            //Alternerne giving out cards
+            int LastPlayerThatDrew = 0;
+            for (int i = 0; i < BlackPeterGame.Cards.Count; i++)
             {
-                for (int u = 0; u < MyCardDeck.Cards.Count(); u++)
+                if(LastPlayerThatDrew == 0)
                 {
-                    sb.AppendLine(myText.Split('\n')[i].Replace("S", "♥").Replace("V", "5").Replace('\n',' '));
+                    BlackPeterGame.Players[0].Hand.Add(BlackPeterGame.Cards[i]);
+                    LastPlayerThatDrew = 1;
                 }
-                sb.AppendLine("B");
+                else
+                {
+                    BlackPeterGame.Players[1].Hand.Add(BlackPeterGame.Cards[i]);
+                    LastPlayerThatDrew = 0;
+                }
             }
 
-            string fuckyou = (sb.ToString().Split('B')[0]);
-            Console.WriteLine("---");
-            Console.WriteLine(fuckyou);
-            Console.WriteLine("---");
+            //Remove inital pairs from both players
+            for (int i = 0; i < BlackPeterGame.Players.Count; i++)
+            {
+                //BlackPeterGame.CheckForPair(BlackPeterGame.Players[i]);
+            }
+
+            
+            while (true)
+            {
+
+                for (int i = 0; i < BlackPeterGame.Players.Count; i++)
+                {
+
+                    //Check if a winner has been found
+                    if(BlackPeterGame.Players[i].Hand.Count == 1)
+                    {
+                        Console.WriteLine("Winner is player: "+i);
+                        Console.ReadKey();
+                    }
+
+                    int PlayerToTheLeft;
+                    if (i == BlackPeterGame.Players.Count - 1)
+                    {
+                        PlayerToTheLeft = 0;
+                    }
+                    else
+                    {
+                        PlayerToTheLeft = 1;
+                    }
 
 
-            Console.ReadKey();
+                    int OpponentCardIndex = rnd.Next(1, BlackPeterGame.Players[PlayerToTheLeft].Hand.Count);
+
+                    Card TakenCard = BlackPeterGame.Players[PlayerToTheLeft].TakeCardAtIndex(OpponentCardIndex);
+                    BlackPeterGame.Players[0].Hand.Add(TakenCard);
+                    BlackPeterGame.CheckForPair(BlackPeterGame.Players[i]);
+                }
+
+                Console.WriteLine("P1:" + BlackPeterGame.Players[0].Hand.Count);
+                Console.WriteLine("P2:" + BlackPeterGame.Players[1].Hand.Count);
+
+                Thread.Sleep(3);
+                Console.Clear();
+            }
         }
     }
 }
